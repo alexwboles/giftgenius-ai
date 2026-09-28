@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GiftGenius — never panic about gifts again</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>🎁 GiftGenius</h1>
+    <p class="tag">Profiles + occasions → thoughtful gift ideas with budget fit. All local, nothing leaves your browser.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="banner" class="banner" style="display:none"></div>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="people">👥 People</button>
+    <button class="tab" data-tab="occasions">📅 Occasions</button>
+    <button class="tab" data-tab="find">💡 Find gifts</button>
+    <button class="tab" data-tab="bought">✅ Bought</button>
+  </nav>
+
+  <section class="panel active" id="panel-people">
+    <h2>People</h2>
+    <form id="personForm" class="form">
+      <input id="pName" placeholder="Name (e.g. Maya)" required>
+      <select id="pAge">
+        <option value="kid">Kid (0–12)</option>
+        <option value="teen" selected>Teen (13–19)</option>
+        <option value="adult">Adult (20–59)</option>
+        <option value="senior">Senior (60+)</option>
+      </select>
+      <input id="pNotes" placeholder="Notes (e.g. loves stargazing, hates socks)">
+      <div class="chips" id="intChips"></div>
+      <button class="btn" type="submit">Add person</button>
+    </form>
+    <div id="peopleList"></div>
+  </section>
+
+  <section class="panel" id="panel-occasions">
+    <h2>Occasions</h2>
+    <form id="occForm" class="form">
+      <select id="oPerson"></select>
+      <input id="oName" placeholder="Occasion (e.g. Birthday)">
+      <input id="oDate" type="date" required>
+      <input id="oBudget" type="number" min="0" placeholder="Budget $ (optional)">
+      <button class="btn" type="submit">Add occasion</button>
+    </form>
+    <div id="occList"></div>
+  </section>
+
+  <section class="panel" id="panel-find">
+    <h2>Find gifts</h2>
+    <div class="form">
+      <select id="fPerson"></select>
+      <select id="fOcc"></select>
+      <button class="btn" id="findBtn">✨ Get ideas</button>
+    </div>
+    <div class="form ai-row">
+      <input id="aiKey" type="password" placeholder="OpenAI API key (optional — for AI notes)">
+      <span class="muted">Optional. Ideas work fully without it.</span>
+    </div>
+    <div id="suggList"></div>
+  </section>
+
+  <section class="panel" id="panel-bought">
+    <h2>Bought <span class="muted">— so you never repeat a gift</span></h2>
+    <div id="boughtList"></div>
+  </section>
+
+  <footer class="muted">GiftGenius · 100% local · your data never leaves this browser</footer>
+</div>
+
+<script src="js/giftbank.js"></script>
+<script src="js/logic.js"></script>
+<script src="js/app.js"></script>
+<script>
+  // render interest chips from shared logic
+  (function () {
+    const box = document.getElementById("intChips");
+    box.innerHTML = INTERESTS.map(k =>
+      `<button type="button" class="int-chip" data-k="${k}">${INTEREST_LABELS[k]}</button>`).join("");
+    box.querySelectorAll(".int-chip").forEach(c =>
+      c.addEventListener("click", () => c.classList.toggle("selected")));
+  })();
+</script>
+</body>
+</html>
