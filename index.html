@@ -4,58 +4,73 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GiftGenius — never panic about gifts again</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header>
-  <div class="wrap">
-    <h1>GiftGenius</h1>
-    <p class="tag">Profiles + occasions → thoughtful gift ideas with budget fit. All local, nothing leaves your browser.</p>
+<header class="masthead">
+  <div class="wrap masthead-in">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="4" y="8" width="14" height="11" rx="2" stroke="#fdf6ef" stroke-width="1.8"/><path d="M3 5.5h16v3H3z" stroke="#fdf6ef" stroke-width="1.8"/><path d="M11 5.5V19M11 5.5C9 5.5 7 4.5 7 2.8 7 1.6 8 1 9 1c1.8 0 2 2.4 2 4.5Zm0 0c2 0 4-1 4-2.7C15 1.6 14 1 13 1c-1.8 0-2 2.4-2 4.5Z" stroke="#fdf6ef" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <div class="brand-text">
+        <h1>GiftGenius</h1>
+        <p class="tag">Profiles + occasions → thoughtful gift ideas with budget fit. All local, nothing leaves your browser.</p>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Sections">
+      <button class="tab active" data-tab="people">People</button>
+      <button class="tab" data-tab="occasions">Occasions</button>
+      <button class="tab" data-tab="find">Find gifts</button>
+      <button class="tab" data-tab="bought">Bought</button>
+    </nav>
   </div>
 </header>
 
-<div class="wrap">
+<div class="wrap main">
   <div id="banner" class="banner" style="display:none"></div>
 
-  <nav class="tabs">
-    <button class="tab active" data-tab="people">People</button>
-    <button class="tab" data-tab="occasions">Occasions</button>
-    <button class="tab" data-tab="find">Find gifts</button>
-    <button class="tab" data-tab="bought">Bought</button>
-  </nav>
-
   <section class="panel active" id="panel-people">
-    <h2>People</h2>
-    <form id="personForm" class="form">
-      <input id="pName" placeholder="Name (e.g. Maya)" required>
-      <select id="pAge">
-        <option value="kid">Kid (0–12)</option>
-        <option value="teen" selected>Teen (13–19)</option>
-        <option value="adult">Adult (20–59)</option>
-        <option value="senior">Senior (60+)</option>
-      </select>
+    <div class="panel-head"><h2>People</h2><span class="panel-note">who you're shopping for</span></div>
+    <form id="personForm" class="form card-form">
+      <div class="frow">
+        <input id="pName" placeholder="Name (e.g. Maya)" required>
+        <select id="pAge">
+          <option value="kid">Kid (0–12)</option>
+          <option value="teen" selected>Teen (13–19)</option>
+          <option value="adult">Adult (20–59)</option>
+          <option value="senior">Senior (60+)</option>
+        </select>
+      </div>
       <input id="pNotes" placeholder="Notes (e.g. loves stargazing, hates socks)">
       <div class="chips" id="intChips"></div>
       <button class="btn" type="submit">Add person</button>
     </form>
-    <div id="peopleList"></div>
+    <div id="peopleList" class="stack"></div>
   </section>
 
   <section class="panel" id="panel-occasions">
-    <h2>Occasions</h2>
-    <form id="occForm" class="form">
-      <select id="oPerson"></select>
-      <input id="oName" placeholder="Occasion (e.g. Birthday)">
-      <input id="oDate" type="date" required>
-      <input id="oBudget" type="number" min="0" placeholder="Budget $ (optional)">
+    <div class="panel-head"><h2>Occasions</h2><span class="panel-note">never miss one again</span></div>
+    <form id="occForm" class="form card-form">
+      <div class="frow">
+        <select id="oPerson"></select>
+        <input id="oName" placeholder="Occasion (e.g. Birthday)">
+      </div>
+      <div class="frow">
+        <input id="oDate" type="date" required>
+        <input id="oBudget" type="number" min="0" placeholder="Budget $ (optional)">
+      </div>
       <button class="btn" type="submit">Add occasion</button>
     </form>
-    <div id="occList"></div>
+    <div id="occList" class="stack"></div>
   </section>
 
   <section class="panel" id="panel-find">
-    <h2>Find gifts</h2>
-    <div class="form">
+    <div class="panel-head"><h2>Find gifts</h2><span class="panel-note">curated for the person</span></div>
+    <div class="form card-form finder">
       <select id="fPerson"></select>
       <select id="fOcc"></select>
       <button class="btn" id="findBtn">Get ideas</button>
@@ -64,15 +79,15 @@
       <input id="aiKey" type="password" placeholder="OpenAI API key (optional — for AI notes)">
       <span class="muted">Optional. Ideas work fully without it.</span>
     </div>
-    <div id="suggList"></div>
+    <div id="suggList" class="stack"></div>
   </section>
 
   <section class="panel" id="panel-bought">
-    <h2>Bought <span class="muted">— so you never repeat a gift</span></h2>
-    <div id="boughtList"></div>
+    <div class="panel-head"><h2>Bought</h2><span class="panel-note">so you never repeat a gift</span></div>
+    <div id="boughtList" class="stack"></div>
   </section>
 
-  <footer class="muted">GiftGenius · 100% local · your data never leaves this browser</footer>
+  <footer class="foot muted">GiftGenius · 100% local · your data never leaves this browser</footer>
 </div>
 
 <script src="js/giftbank.js"></script>

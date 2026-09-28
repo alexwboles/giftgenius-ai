@@ -36,10 +36,10 @@
     const up = upcomingOccasions(state.occasions, state.people, todayISO()).filter(x => x.nudge);
     const b = $("banner");
     if (!up.length) { b.style.display = "none"; return; }
-    b.style.display = "block";
-    b.innerHTML = "🔔 " + up.slice(0, 3).map(x =>
+    b.style.display = "flex";
+    b.innerHTML = '<span class="b-dot" aria-hidden="true"></span><div>' + up.slice(0, 3).map(x =>
       `<strong>${esc(x.person ? x.person.name : "Someone")}</strong> — ${esc(x.occasion.name)}: ${esc(x.nudge)}`
-    ).join("<br>");
+    ).join("<br>") + "</div>";
   }
 
   /* ---------- people ---------- */
@@ -50,7 +50,7 @@
        <span class="pill">${esc(AGE_LABELS[p.ageBand] || p.ageBand)}</span>
        <button class="link" data-del-person="${p.id}">remove</button></div>
        <div class="muted">${p.interests.map(k => esc(INTEREST_LABELS[k] || k)).join(" · ") || "no interests yet"}</div>
-       ${p.notes ? `<div class="muted">📝 ${esc(p.notes)}</div>` : ""}</div>`
+       ${p.notes ? `<div class="note-line">${esc(p.notes)}</div>` : ""}</div>`
     ).join("") : `<div class="empty">No people yet — add your first person above.</div>`;
     list.querySelectorAll("[data-del-person]").forEach(btn => btn.addEventListener("click", () => {
       const id = btn.dataset.delPerson;
@@ -129,10 +129,10 @@
       `<div class="card gift"><div class="card-head"><strong>${i + 1}. ${esc(s.gift.n)}</strong>
        <span class="pill">${priceRange(s.gift)}</span></div>
        <div class="muted">${esc(s.gift.d)}</div>
-       <div class="why">💡 ${esc(s.why)}</div>
-       <div class="row"><button class="btn small" data-buy="${i}">✓ Bought</button>
+       <div class="why"><span class="why-mark">Why it fits</span>${esc(s.why)}</div>
+       <div class="row"><button class="btn small" data-buy="${i}">Mark bought</button>
        <button class="btn small ghost" data-hide="${i}">Hide</button>
-       <button class="btn small ghost" data-ai="${i}">✨ AI note</button></div>
+       <button class="btn small ghost" data-ai="${i}">AI note</button></div>
        <div class="ai-note" id="ainote-${i}" style="display:none"></div></div>`
     ).join("");
     box.querySelectorAll("[data-buy]").forEach(b => b.addEventListener("click", () => {
@@ -164,7 +164,7 @@
       });
       if (!resp.ok) throw new Error("API error");
       const data = await resp.json();
-      note.textContent = "✨ " + data.choices[0].message.content.trim();
+      note.textContent = data.choices[0].message.content.trim();
     } catch (e) { note.textContent = "Couldn't reach the AI brain — the idea above is still solid on its own."; }
   }
 
