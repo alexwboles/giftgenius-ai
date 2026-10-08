@@ -96,6 +96,57 @@ function spentForOccasion(bought, occasionId) {
     .reduce((s, b) => s + (Number(b.price) || 0), 0);
 }
 
+/* Edit a person profile in place (mutates the people array). */
+function updatePerson(people, id, fields) {
+  const p = (people || []).find(x => x.id === id);
+  if (!p) return false;
+  if (fields.name != null && String(fields.name).trim()) p.name = String(fields.name).trim();
+  if (AGE_BANDS.includes(fields.ageBand)) p.ageBand = fields.ageBand;
+  if (Array.isArray(fields.interests)) p.interests = fields.interests.filter(k => INTERESTS.includes(k));
+  if (fields.notes != null) p.notes = String(fields.notes).trim();
+  return true;
+}
+
+/* Edit an occasion in place. */
+function updateOccasion(occasions, id, fields) {
+  const o = (occasions || []).find(x => x.id === id);
+  if (!o) return false;
+  if (fields.name != null && String(fields.name).trim()) o.name = String(fields.name).trim();
+  if (fields.date != null && /^\d{4}-\d{2}-\d{2}$/.test(fields.date)) o.date = fields.date;
+  if (fields.budget != null) o.budget = Math.max(0, Number(fields.budget) || 0);
+  return true;
+}
+
+/* Totals across upcoming occasions: budgeted vs already spent. */
+function budgetOverview(occasions, people, bought, todayISO) {
+  const up = upcomingOccasions(occasions, people, todayISO);
+  let budgeted = 0, spent = 0, withBudget = 0;
+  for (const x of up) {
+    const bud = x.occasion.budget || 0;
+    if (bud > 0) { withBudget++; budgeted += bud; }
+    spent += spentForOccasion(bought, x.occasion.id);
+  }
+  return { occasions: up.length, withBudget, budgeted, spent,
+    remaining: Math.max(0, budgeted - spent) };
+}
+
+/* Shortlist helpers: star/unstar a gift name for an occasion. */
+function toggleShortlist(shortlist, occasionId, giftName) {
+  shortlist = shortlist || {};
+  const list = shortlist[occasionId] || (shortlist[occasionId] = []);
+  const i = list.indexOf(giftName);
+  if (i === -1) list.push(giftName); else list.splice(i, 1);
+  return shortlist;
+}
+
+function boughtToCSV(bought, people) {
+  const pname = id => { const p = (people || []).find(x => x.id === id); return p ? p.name : ""; };
+  const cell = v => { const s = String(v == null ? "" : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const rows = [["gift", "person", "year", "price"]];
+  (bought || []).forEach(b => rows.push([cell(b.name), cell(pname(b.personId)), cell(b.year), cell(b.price || "")]));
+  return rows.map(r => r.join(",")).join("\n");
+}
+
 function upcomingOccasions(occasions, people, todayISO) {
   return (occasions || [])
     .map(o => {
@@ -110,5 +161,6 @@ function upcomingOccasions(occasions, people, todayISO) {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { INTERESTS, INTEREST_LABELS, AGE_BANDS, AGE_LABELS,
     daysUntil, occasionNudge, scoreGift, suggestGifts, whyLine, priceRange,
-    spentForOccasion, upcomingOccasions };
+    spentForOccasion, upcomingOccasions, updatePerson, updateOccasion,
+    budgetOverview, toggleShortlist, boughtToCSV };
 }

@@ -54,6 +54,7 @@
 
   <section class="panel" id="panel-occasions">
     <div class="panel-head"><h2>Occasions</h2><span class="panel-note">never miss one again</span></div>
+    <div id="occOverview"></div>
     <form id="occForm" class="form card-form">
       <div class="frow">
         <select id="oPerson"></select>
@@ -79,11 +80,15 @@
       <input id="aiKey" type="password" placeholder="OpenAI API key (optional — for AI notes)">
       <span class="muted">Optional. Ideas work fully without it.</span>
     </div>
+    <div class="short-head"><h3>Shortlist</h3><span class="muted">starred for this person & occasion</span></div>
+    <div id="shortList" class="stack"></div>
+    <div class="short-head"><h3>Ideas</h3></div>
     <div id="suggList" class="stack"></div>
   </section>
 
   <section class="panel" id="panel-bought">
     <div class="panel-head"><h2>Bought</h2><span class="panel-note">so you never repeat a gift</span></div>
+    <div id="boughtTools" class="tools-row"></div>
     <div id="boughtList" class="stack"></div>
   </section>
 

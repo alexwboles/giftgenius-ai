@@ -6,11 +6,11 @@
 
 Everyone has the same December (or birthday-week) panic: *what do I get them?* You either overspend on something generic, buy a repeat of last year, or order too late. GiftGenius fixes the whole loop:
 
-1. **People profiles** — name, age band, interests, free-text notes ("loves stargazing, hates socks")
-2. **Occasions with countdowns** — "Maya's birthday in 12 days", with plain-language nudges when time is short
-3. **AI-style suggestions** — top 5 ideas scored by interest match + age fit + budget fit, each with a "why it fits" line
+1. **People profiles** — name, age band, interests, free-text notes ("loves stargazing, hates socks"); edit any profile inline
+2. **Occasions with countdowns** — "Maya's birthday in 12 days", with plain-language nudges when time is short, an editable budget strip (budgeted vs spent vs remaining across all upcoming occasions), and inline editing
+3. **AI-style suggestions** — top 5 ideas scored by interest match + age fit + budget fit, each with a "why it fits" line; star ideas into a per-occasion shortlist
 4. **Budget tracker** — spent-vs-budget bar per occasion
-5. **No-repeat memory** — bought gifts are remembered so you never duplicate next year; hide duds per person
+5. **No-repeat memory** — bought gifts are remembered so you never duplicate next year; hide duds per person; export the bought list as CSV
 6. **Optional AI notes** — paste your own OpenAI API key for a one-sentence personalized note per idea (never required)
 
 ## How to run
