@@ -67,6 +67,8 @@
       <button class="btn" type="submit">Add occasion</button>
     </form>
     <div id="occList" class="stack"></div>
+    <div class="short-head"><h3>Past occasions</h3><span class="muted">roll them into next year</span></div>
+    <div id="pastList" class="stack"></div>
   </section>
 
   <section class="panel" id="panel-find">
@@ -84,6 +86,22 @@
     <div id="shortList" class="stack"></div>
     <div class="short-head"><h3>Ideas</h3></div>
     <div id="suggList" class="stack"></div>
+    <div class="short-head"><h3>Your own ideas</h3><span class="muted">added by you, scored with the rest</span></div>
+    <form id="customForm" class="form card-form">
+      <div class="frow">
+        <input id="cgName" placeholder="Idea name (e.g. backyard telescope)">
+        <input id="cgDesc" placeholder="Short description">
+      </div>
+      <div class="frow">
+        <input id="cgLo" type="number" min="1" placeholder="Price from $">
+        <input id="cgHi" type="number" min="1" placeholder="Price up to $">
+      </div>
+      <div class="chips" id="cgChips"></div>
+      <div class="agerow" id="cgAges"></div>
+      <p class="form-err" id="cgErr" style="display:none"></p>
+      <button class="btn" type="submit">Add my idea</button>
+    </form>
+    <div id="customList" class="stack"></div>
   </section>
 
   <section class="panel" id="panel-bought">

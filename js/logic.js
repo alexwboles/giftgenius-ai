@@ -57,9 +57,10 @@ function scoreGift(gift, person, occasion) {
   return { score, hits };
 }
 
-/* wasBought: array of {personId, name}; hidden: array of gift names for this person */
-function suggestGifts(person, occasion, wasBought, hidden, topN) {
-  const bank = _bank();
+/* wasBought: array of {personId, name}; hidden: array of gift names for this person;
+   extra: array of user-added gift ideas (same shape as bank entries) */
+function suggestGifts(person, occasion, wasBought, hidden, topN, extra) {
+  const bank = _bank().concat(extra || []);
   topN = topN || 5;
   const boughtNames = new Set((wasBought || []).filter(b => b.personId === person.id).map(b => b.name));
   const hiddenNames = new Set(hidden || []);
@@ -117,17 +118,69 @@ function updateOccasion(occasions, id, fields) {
   return true;
 }
 
+/* Validate a user-added gift idea (same shape as GIFT_BANK entries). */
+function validateCustomGift(fields) {
+  const errors = [];
+  if (!String(fields.n || "").trim()) errors.push("Give the idea a name.");
+  if (!String(fields.d || "").trim()) errors.push("Add a short description.");
+  const lo = Number(fields.lo), hi = Number(fields.hi);
+  if (!(lo > 0)) errors.push("Price-from must be above $0.");
+  if (!(hi >= lo)) errors.push("Price-up-to must be at least the price-from.");
+  if (!(fields.i || []).some(k => INTERESTS.includes(k))) errors.push("Pick at least one interest.");
+  if (!(fields.a || []).some(k => AGE_BANDS.includes(k))) errors.push("Pick at least one age band.");
+  return errors;
+}
+
+function addCustomGift(gifts, fields) {
+  const errors = validateCustomGift(fields);
+  if (errors.length) return { ok: false, errors };
+  const g = {
+    n: String(fields.n).trim(), d: String(fields.d).trim(),
+    i: (fields.i || []).filter(k => INTERESTS.includes(k)),
+    a: (fields.a || []).filter(k => AGE_BANDS.includes(k)),
+    lo: Number(fields.lo), hi: Number(fields.hi),
+    custom: true
+  };
+  gifts.push(g);
+  return { ok: true, gift: g };
+}
+
+/* Occasions whose date already passed — most recent first. */
+function pastOccasions(occasions, people, todayISO) {
+  return (occasions || [])
+    .map(o => {
+      const days = daysUntil(o.date, todayISO);
+      const person = (people || []).find(p => p.id === o.personId);
+      return { occasion: o, person, days };
+    })
+    .filter(x => x.days < 0)
+    .sort((a, b) => b.days - a.days);
+}
+
+/* Move an occasion's date forward one year (Feb 29 -> Feb 28 in non-leap years). */
+function rollToNextYear(o) {
+  const parts = String(o.date).split("-");
+  const m = parseInt(parts[1], 10), d = parseInt(parts[2], 10);
+  let nd = new Date(parseInt(parts[0], 10) + 1, m - 1, d);
+  if (nd.getMonth() !== m - 1) nd = new Date(nd.getFullYear(), m - 1, 28);
+  o.date = nd.getFullYear() + "-" + String(nd.getMonth() + 1).padStart(2, "0") +
+    "-" + String(nd.getDate()).padStart(2, "0");
+  return o;
+}
+
 /* Totals across upcoming occasions: budgeted vs already spent. */
 function budgetOverview(occasions, people, bought, todayISO) {
   const up = upcomingOccasions(occasions, people, todayISO);
-  let budgeted = 0, spent = 0, withBudget = 0;
+  let budgeted = 0, spent = 0, withBudget = 0, overCount = 0, overBy = 0;
   for (const x of up) {
     const bud = x.occasion.budget || 0;
+    const sp = spentForOccasion(bought, x.occasion.id);
     if (bud > 0) { withBudget++; budgeted += bud; }
-    spent += spentForOccasion(bought, x.occasion.id);
+    if (bud > 0 && sp > bud) { overCount++; overBy += sp - bud; }
+    spent += sp;
   }
   return { occasions: up.length, withBudget, budgeted, spent,
-    remaining: Math.max(0, budgeted - spent) };
+    remaining: Math.max(0, budgeted - spent), overCount, overBy };
 }
 
 /* Shortlist helpers: star/unstar a gift name for an occasion. */
@@ -161,6 +214,8 @@ function upcomingOccasions(occasions, people, todayISO) {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = { INTERESTS, INTEREST_LABELS, AGE_BANDS, AGE_LABELS,
     daysUntil, occasionNudge, scoreGift, suggestGifts, whyLine, priceRange,
-    spentForOccasion, upcomingOccasions, updatePerson, updateOccasion,
-    budgetOverview, toggleShortlist, boughtToCSV };
+    spentForOccasion, upcomingOccasions, pastOccasions, rollToNextYear,
+    updatePerson, updateOccasion,
+    budgetOverview, toggleShortlist, boughtToCSV,
+    validateCustomGift, addCustomGift };
 }

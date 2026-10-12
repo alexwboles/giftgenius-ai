@@ -8,9 +8,9 @@
   function load() {
     try {
       const raw = localStorage.getItem(LS_KEY);
-      if (raw) { const d = JSON.parse(raw); return Object.assign({ people: [], occasions: [], bought: [], hidden: {}, shortlist: {} }, d); }
+      if (raw) { const d = JSON.parse(raw); return Object.assign({ people: [], occasions: [], bought: [], hidden: {}, shortlist: {}, customGifts: [] }, d); }
     } catch (e) {}
-    return { people: [], occasions: [], bought: [], hidden: {}, shortlist: {} };
+    return { people: [], occasions: [], bought: [], hidden: {}, shortlist: {}, customGifts: [] };
   }
   function save() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
   function downloadCSV(csv, filename) {
@@ -114,7 +114,8 @@
     $("occOverview").innerHTML = up.length
       ? `<div class="budget-strip"><div class="bs"><div class="num">$${ov.budgeted}</div><div class="lbl">budgeted (${ov.withBudget} occasion${ov.withBudget === 1 ? "" : "s"})</div></div>
          <div class="bs"><div class="num">$${ov.spent}</div><div class="lbl">spent</div></div>
-         <div class="bs"><div class="num">$${ov.remaining}</div><div class="lbl">remaining</div></div></div>`
+         <div class="bs"><div class="num">$${ov.remaining}</div><div class="lbl">remaining</div></div>
+         ${ov.overCount ? `<div class="bs over"><div class="num">${ov.overCount}</div><div class="lbl">over budget ($${ov.overBy} over)</div></div>` : ""}</div>`
       : "";
     $("occList").innerHTML = up.length ? up.map(x => {
       const spent = spentForOccasion(state.bought, x.occasion.id);
@@ -135,6 +136,7 @@
         <button class="link" data-del-occ="${x.occasion.id}">remove</button></div>
         <div class="muted">${esc(x.occasion.date)}${bud ? ` · budget $${bud} · spent $${spent}` : ""}</div>
         ${bud ? `<div class="bar"><div style="width:${pct}%"></div></div>` : ""}
+        ${bud && spent > bud ? `<div class="overwarn">Over budget by $${spent - bud} — the plan was $${bud}.</div>` : ""}
         ${x.nudge ? `<div class="nudge">${esc(x.nudge)}</div>` : ""}</div>`;
     }).join("") : `<div class="empty">No upcoming occasions — add one above.</div>`;
     $("occList").querySelectorAll("[data-del-occ]").forEach(btn => btn.addEventListener("click", () => {
@@ -154,6 +156,23 @@
     }));
     const sel = $("oPerson");
     sel.innerHTML = state.people.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+    /* past occasions: roll them forward instead of retyping */
+    const past = pastOccasions(state.occasions, state.people, todayISO());
+    $("pastList").innerHTML = past.length ? past.map(x =>
+      `<div class="card past"><div class="card-head"><strong>${esc(x.person ? x.person.name : "?")}</strong>
+       <span class="pill">${esc(x.occasion.name)}</span>
+       <span class="muted">was ${esc(x.occasion.date)} (${Math.abs(x.days)}d ago)</span>
+       <button class="link" data-roll="${x.occasion.id}">→ move to next year</button>
+       <button class="link" data-del-occ="${x.occasion.id}">remove</button></div></div>`
+    ).join("") : `<div class="empty muted">No past occasions.</div>`;
+    $("pastList").querySelectorAll("[data-roll]").forEach(btn => btn.addEventListener("click", () => {
+      const o = state.occasions.find(o => o.id === btn.dataset.roll);
+      if (o) { rollToNextYear(o); save(); renderOccasions(); renderBanner(); }
+    }));
+    $("pastList").querySelectorAll("[data-del-occ]").forEach(btn => btn.addEventListener("click", () => {
+      state.occasions = state.occasions.filter(o => o.id !== btn.dataset.delOcc);
+      save(); renderOccasions(); renderBanner();
+    }));
   }
   $("occForm").addEventListener("submit", e => {
     e.preventDefault();
@@ -204,7 +223,7 @@
     if (!person) { alert("Add a person first."); return; }
     const occasion = state.occasions.find(o => o.id === $("fOcc").value) || { budget: 0, name: "Gift" };
     lastOccasionId = occasion.id || null;
-    lastSuggestions = suggestGifts(person, occasion, state.bought, state.hidden[person.id] || [], 5)
+    lastSuggestions = suggestGifts(person, occasion, state.bought, state.hidden[person.id] || [], 5, state.customGifts)
       .map(s => ({ personId: person.id, occasionId: occasion.id || null, score: s.score, why: whyLine(s, person, occasion), gift: s.gift }));
     renderSuggestions(person, occasion);
     renderShortlist();
@@ -283,6 +302,40 @@
     }));
   }
 
+  /* ---------- custom gift ideas (user-added bank entries) ---------- */
+  function renderCustomGifts() {
+    $("cgChips").innerHTML = INTERESTS.map(k =>
+      `<button type="button" class="int-chip" data-k="${k}">${INTEREST_LABELS[k]}</button>`).join("");
+    $("cgChips").querySelectorAll(".int-chip").forEach(c =>
+      c.addEventListener("click", () => c.classList.toggle("selected")));
+    $("cgAges").innerHTML = AGE_BANDS.map(k =>
+      `<label class="age-check"><input type="checkbox" value="${k}"> ${AGE_LABELS[k]}</label>`).join("");
+    $("customList").innerHTML = state.customGifts.length ? state.customGifts.map((g, i) =>
+      `<div class="card"><div class="card-head"><strong>${esc(g.n)}</strong>
+       <span class="pill">${priceRange(g)}</span>
+       <button class="link" data-del-cg="${i}">remove</button></div>
+       <div class="muted">${esc(g.d)} · ${(g.i || []).map(k => INTEREST_LABELS[k] || k).join(", ")} · ${(g.a || []).map(k => AGE_LABELS[k] || k).join(", ")}</div></div>`
+    ).join("") : `<div class="empty muted">No custom ideas yet — the bank has 150+ to start with.</div>`;
+    $("customList").querySelectorAll("[data-del-cg]").forEach(btn => btn.addEventListener("click", () => {
+      state.customGifts.splice(+btn.dataset.delCg, 1); save(); renderCustomGifts();
+    }));
+  }
+  $("customForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const err = $("cgErr");
+    const res = addCustomGift(state.customGifts, {
+      n: $("cgName").value, d: $("cgDesc").value,
+      lo: $("cgLo").value, hi: $("cgHi").value,
+      i: [...document.querySelectorAll("#cgChips .int-chip.selected")].map(c => c.dataset.k),
+      a: [...document.querySelectorAll("#cgAges input:checked")].map(c => c.value)
+    });
+    if (!res.ok) { err.textContent = res.errors.join(" "); err.style.display = "block"; return; }
+    err.style.display = "none";
+    save(); e.target.reset();
+    renderCustomGifts();
+  });
+
   renderBanner();
+  renderCustomGifts();
   showTab("people");
 })();
