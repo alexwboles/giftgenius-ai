@@ -93,3 +93,15 @@ check "app wires dupe guard, split, and timeline" sh -c "grep -q alreadyGivenToO
 
 echo "--- smoke: $pass passed, $fail failed ---"
 exit $((fail>0))
+
+# redesign sweep: fit rings, rank medallions, interest tags, no gradients
+check "fitRingHTML in app.js" node -e "
+  const fs=require('fs'), a=fs.readFileSync('js/app.js','utf8');
+  for (const s of ['fitRingHTML','rank-medal','itag','gift-main']) if(!a.includes(s)) throw new Error('missing '+s);"
+check "fit ring math sanity" node -e "
+  const pct=(s)=>Math.max(0,Math.min(100,Math.round((s/60)*100)));
+  if(pct(45)!==75||pct(0)!==0||pct(90)!==100||pct(-5)!==0) throw new Error('clamp');"
+check "css: no gradients, ring + tag styles" node -e "
+  const fs=require('fs'), c=fs.readFileSync('css/style.css','utf8');
+  if(c.includes('linear-gradient')) throw new Error('gradient');
+  for (const s of ['.fit-ring','.rank-medal','.itag']) if(!c.includes(s)) throw new Error('missing '+s);"

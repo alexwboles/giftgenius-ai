@@ -80,7 +80,7 @@
        <span class="pill">${esc(AGE_LABELS[p.ageBand] || p.ageBand)}</span>
        <button class="link" data-edit-person="${p.id}">edit</button>
        <button class="link" data-del-person="${p.id}">remove</button></div>
-       <div class="muted">${p.interests.map(k => esc(INTEREST_LABELS[k] || k)).join(" · ") || "no interests yet"}</div>
+       <div class="itags">${p.interests.map(k => `<span class="itag person">${esc(INTEREST_LABELS[k] || k)}</span>`).join("") || `<span class="muted">no interests yet</span>`}</div>
        ${p.notes ? `<div class="note-line">${esc(p.notes)}</div>` : ""}
        ${giftHistoryLine(p)}</div>`;
     }).join("");
@@ -238,20 +238,35 @@
     renderSuggestions(person, occasion);
     renderShortlist();
   });
+  // Fit-score ring: score runs roughly 0–60, normalized to a ring + label.
+  function fitRingHTML(score) {
+    const MAXS = 60;
+    const pct = Math.max(0, Math.min(100, Math.round((score / MAXS) * 100)));
+    const r = 17, c = 2 * Math.PI * r;
+    const off = (c * (1 - pct / 100)).toFixed(1);
+    const label = pct >= 75 ? "Great fit" : pct >= 50 ? "Good fit" : pct >= 30 ? "Decent" : "Stretch";
+    return `<div class="fit-ring" role="img" aria-label="fit score ${score}, ${label}"><span class="ring">` +
+      `<svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="${r}" class="ring-bg"/>` +
+      `<circle cx="23" cy="23" r="${r}" class="ring-fg" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off}" transform="rotate(-90 23 23)"/></svg>` +
+      `<span class="ring-num">${score}</span></span><span class="fit-lbl">${label}</span></div>`;
+  }
   function renderSuggestions(person, occasion) {
     const box = $("suggList");
     const starred = new Set(state.shortlist[shortlistKey()] || []);
     if (!lastSuggestions.length) { box.innerHTML = `<div class="empty">No ideas left — everything's bought or hidden for ${esc(person.name)}!</div>`; return; }
     box.innerHTML = lastSuggestions.map((s, i) =>
-      `<div class="card gift"><div class="card-head"><strong>${i + 1}. ${esc(s.gift.n)}</strong>
+      `<div class="card gift"><div class="rank-medal">${i + 1}</div><div class="gift-main">
+       <div class="card-head"><strong>${esc(s.gift.n)}</strong>
        <span class="pill">${priceRange(s.gift)}</span></div>
        <div class="muted">${esc(s.gift.d)}</div>
+       ${fitRingHTML(s.score)}
+       ${(s.gift.i && s.gift.i.length) ? `<div class="itags">${s.gift.i.map(k => `<span class="itag">${esc(INTEREST_LABELS[k] || k)}</span>`).join("")}</div>` : ""}
        <div class="why"><span class="why-mark">Why it fits</span>${esc(s.why)}</div>
        <div class="row"><button class="btn small" data-buy="${i}">Mark bought</button>
        <button class="btn small ghost" data-hide="${i}">Hide</button>
        <button class="btn small ghost" data-star="${i}">${starred.has(s.gift.n) ? "★ Starred" : "☆ Star"}</button>
        <button class="btn small ghost" data-ai="${i}">AI note</button></div>
-       <div class="ai-note" id="ainote-${i}" style="display:none"></div></div>`
+       <div class="ai-note" id="ainote-${i}" style="display:none"></div></div></div>`
     ).join("");
     box.querySelectorAll("[data-star]").forEach(b => b.addEventListener("click", () => {
       const s = lastSuggestions[+b.dataset.star];

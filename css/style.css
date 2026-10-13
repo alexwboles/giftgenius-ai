@@ -35,7 +35,7 @@ body {
 .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
 
 /* ---------- masthead ---------- */
-.masthead { background: linear-gradient(180deg, #3a222b 0%, #2c1a21 100%); color: #f7efe6; position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 20px rgba(44, 26, 33, .35); }
+.masthead { background: #2c1a21; color: #f7efe6; position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 20px rgba(44, 26, 33, .35); }
 .masthead-in { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-top: 16px; padding-bottom: 16px; }
 .brand { display: flex; gap: 14px; align-items: center; }
 .brand-mark { width: 46px; height: 46px; border-radius: 0; background: var(--berry); display: flex; align-items: center; justify-content: center; flex: none; box-shadow: 0 8px 18px rgba(168, 50, 74, .45); transform: rotate(-4deg); }
@@ -122,7 +122,7 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 .link { background: none; border: 0; color: var(--muted); font: 600 12.5px var(--sans); cursor: pointer; margin-left: auto; text-decoration: underline; text-underline-offset: 3px; }
 .link:hover { color: var(--berry); }
 .bar { height: 7px; background: var(--paper-2); border-radius: 0; margin: 10px 0 4px; overflow: hidden; }
-.bar > div { height: 100%; background: linear-gradient(90deg, var(--berry), var(--gold)); border-radius: 0; transition: width .4s ease; }
+.bar > div { height: 100%; background: var(--berry); border-radius: 0; transition: width .4s ease; }
 
 /* ---------- budget overview strip ---------- */
 .budget-strip {
@@ -184,4 +184,33 @@ select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmln
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ---------- 2026 redesign: fit rings, rank medallions, interest tags ---------- */
+.card.gift { display: grid; grid-template-columns: 64px 1fr; gap: 6px 18px; }
+.gift-main { min-width: 0; }
+.rank-medal {
+  width: 52px; height: 52px; background: var(--berry); color: #fff;
+  display: grid; place-items: center; font-family: var(--serif);
+  font-size: 22px; font-weight: 700; grid-row: 1;
+}
+.fit-ring { display: flex; align-items: center; gap: 10px; margin: 10px 0 2px; }
+.fit-ring .ring { position: relative; width: 46px; height: 46px; flex: none; }
+.fit-ring .ring-bg { fill: none; stroke: var(--line); stroke-width: 6; }
+.fit-ring .ring-fg { fill: none; stroke: var(--gold); stroke-width: 6; }
+.fit-ring .ring-num {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--ink);
+}
+.fit-lbl { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.itags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 2px; }
+.itag {
+  font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  background: var(--berry-soft); color: var(--berry-deep); border: 1px solid #e3b8c4;
+  padding: 3px 10px;
+}
+.itag.person { background: var(--paper-2); color: var(--ink-soft); border-color: var(--line); }
+@media (max-width: 560px) {
+  .card.gift { grid-template-columns: 44px 1fr; }
+  .rank-medal { width: 40px; height: 40px; font-size: 18px; }
 }
