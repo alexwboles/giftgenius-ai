@@ -27,6 +27,15 @@
 
   function personName(id) { const p = state.people.find(p => p.id === id); return p ? p.name : "Someone"; }
 
+  function giftHistoryLine(p) {
+    const h = giftHistory(state.bought, p.id);
+    if (!h.length) return "";
+    const txt = h.slice(0, 4).map(y =>
+      `${esc(y.year)}: ` + y.gifts.map(g => esc(g.name) + (g.price ? ` ($${g.price})` : "")).join(", ")
+    ).join(" · ");
+    return `<div class="gave-line"><span class="gave-label">Gave before — </span>${txt}</div>`;
+  }
+
   /* ---------- tabs ---------- */
   function showTab(name) {
     document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
@@ -72,7 +81,8 @@
        <button class="link" data-edit-person="${p.id}">edit</button>
        <button class="link" data-del-person="${p.id}">remove</button></div>
        <div class="muted">${p.interests.map(k => esc(INTEREST_LABELS[k] || k)).join(" · ") || "no interests yet"}</div>
-       ${p.notes ? `<div class="note-line">${esc(p.notes)}</div>` : ""}</div>`;
+       ${p.notes ? `<div class="note-line">${esc(p.notes)}</div>` : ""}
+       ${giftHistoryLine(p)}</div>`;
     }).join("");
     list.querySelectorAll("[data-del-person]").forEach(btn => btn.addEventListener("click", () => {
       const id = btn.dataset.delPerson;
@@ -250,8 +260,15 @@
     }));
     box.querySelectorAll("[data-buy]").forEach(b => b.addEventListener("click", () => {
       const s = lastSuggestions[+b.dataset.buy];
-      const price = prompt(`How much did "${s.gift.n}" cost? (optional)`, "") || "";
-      state.bought.push({ personId: s.personId, occasionId: s.occasionId, name: s.gift.n, price: Number(price) || 0, year: new Date().getFullYear() });
+      const dupes = alreadyGivenToOthers(state.bought, state.people, s.personId, s.gift.n);
+      if (dupes.length && !confirm(`Heads up — you already gave "${s.gift.n}" to ` +
+        dupes.map(d => d.personName + (d.year ? " (" + d.year + ")" : "")).join(", ") +
+        `. Still mark it bought for ${personName(s.personId)}?`)) return;
+      const priceRaw = prompt(`How much did "${s.gift.n}" cost? (optional)`, "") || "";
+      const splitRaw = prompt(`Split with anyone? Comma-separated names, or leave blank.`, "") || "";
+      const split = splitPurchase(priceRaw, parseSplitNames(splitRaw));
+      state.bought.push({ personId: s.personId, occasionId: s.occasionId, name: s.gift.n,
+        price: split.share, totalPrice: split.total, splitWith: split.names, year: new Date().getFullYear() });
       save(); $("findBtn").click(); renderBanner();
     }));
     box.querySelectorAll("[data-hide]").forEach(b => b.addEventListener("click", () => {
@@ -294,6 +311,7 @@
       return `<div class="card"><div class="card-head"><strong>${esc(b.name)}</strong>
         <span class="pill">${esc(personName(b.personId))}</span>
         ${b.price ? `<span class="pill">$${esc(b.price)}</span>` : ""}
+        ${b.splitWith && b.splitWith.length ? `<span class="pill split">split with ${esc(b.splitWith.join(", "))}${b.totalPrice ? " · total $" + esc(b.totalPrice) : ""}</span>` : ""}
         <span class="muted">${esc(b.year)}</span>
         <button class="link" data-unbuy="${i}">undo</button></div></div>`;
     }).join("") : `<div class="empty">Nothing marked as bought yet.</div>`;

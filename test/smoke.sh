@@ -69,6 +69,27 @@ check "boughtToCSV header + quoted row" node -e "
   const csv=L.boughtToCSV([{personId:'p1',name:'Chess, \"deluxe\"',price:40,year:2026}],people).split('\n');
   if(csv[0]!=='gift,person,year,price') throw new Error('header: '+csv[0]);
   if(csv[1]!=='\"Chess, \"\"deluxe\"\"\",Maya,2026,40') throw new Error('row: '+csv[1]);"
+check "alreadyGivenToOthers finds the same gift given to someone else" node -e "
+  const L=require('./js/logic.js');
+  const people=[{id:'p1',name:'Maya'},{id:'p2',name:'Ruth'}];
+  const bought=[{personId:'p2',name:'Chess set',year:2025},{personId:'p1',name:'Chess set',year:2026}];
+  const d=L.alreadyGivenToOthers(bought,people,'p1','Chess set');
+  if(d.length!==1||d[0].personName!=='Ruth'||d[0].year!==2025) throw new Error(JSON.stringify(d));
+  if(L.alreadyGivenToOthers(bought,people,'p2','Chess set').length!==1) throw new Error('should find Maya');
+  if(L.alreadyGivenToOthers(bought,people,'p1','Scarf').length!==0) throw new Error('false positive');"
+check "splitPurchase divides the total fairly" node -e "
+  const L=require('./js/logic.js');
+  if(L.parseSplitNames('Sam, Lee ,,').join()!=='Sam,Lee') throw new Error('parse');
+  const s=L.splitPurchase('120',['Sam','Lee']);
+  if(s.share!==40||s.total!==120||s.names.length!==2) throw new Error(JSON.stringify(s));
+  if(L.splitPurchase('50',[]).share!==50) throw new Error('solo share');"
+check "giftHistory groups by year, newest first" node -e "
+  const L=require('./js/logic.js');
+  const bought=[{personId:'p1',name:'A',year:2024,price:10},{personId:'p1',name:'B',year:2026,price:20},{personId:'p2',name:'C',year:2026}];
+  const h=L.giftHistory(bought,'p1');
+  if(h.length!==2||h[0].year!=='2026'||h[1].year!=='2024') throw new Error(JSON.stringify(h));
+  if(h[0].gifts[0].name!=='B'||h[0].gifts[0].price!==20) throw new Error('gift detail');"
+check "app wires dupe guard, split, and timeline" sh -c "grep -q alreadyGivenToOthers js/app.js && grep -q splitPurchase js/app.js && grep -q giftHistoryLine js/app.js"
 
 echo "--- smoke: $pass passed, $fail failed ---"
 exit $((fail>0))

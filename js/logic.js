@@ -183,6 +183,38 @@ function budgetOverview(occasions, people, bought, todayISO) {
     remaining: Math.max(0, budgeted - spent), overCount, overBy };
 }
 
+/* Split a gift purchase with others. names = ["Sam","Lee"]; the recorded
+   price is the user's share, totalPrice the full cost. */
+function parseSplitNames(str) {
+  return String(str || "").split(",").map(s => s.trim()).filter(Boolean);
+}
+function splitPurchase(total, names) {
+  names = (names || []).filter(Boolean);
+  const t = Number(total) || 0;
+  const share = Math.round(t / (names.length + 1) * 100) / 100;
+  return { names, total: t, share };
+}
+
+/* Same gift name already bought for a DIFFERENT person: [{ personName, year }]. */
+function alreadyGivenToOthers(bought, people, personId, giftName) {
+  const pname = id => { const p = (people || []).find(x => x.id === id); return p ? p.name : "Someone"; };
+  return (bought || [])
+    .filter(b => b.personId !== personId && b.name === giftName)
+    .map(b => ({ personName: pname(b.personId), year: b.year }));
+}
+
+/* Per-person gift history grouped by year, newest first. */
+function giftHistory(bought, personId) {
+  const byYear = {};
+  (bought || []).filter(b => b.personId === personId).forEach(b => {
+    const y = b.year || "?";
+    (byYear[y] = byYear[y] || []).push({ name: b.name, price: b.price });
+  });
+  return Object.keys(byYear)
+    .sort((a, b) => (Number(b) || 0) - (Number(a) || 0))
+    .map(y => ({ year: y, gifts: byYear[y] }));
+}
+
 /* Shortlist helpers: star/unstar a gift name for an occasion. */
 function toggleShortlist(shortlist, occasionId, giftName) {
   shortlist = shortlist || {};
@@ -217,5 +249,6 @@ if (typeof module !== "undefined" && module.exports) {
     spentForOccasion, upcomingOccasions, pastOccasions, rollToNextYear,
     updatePerson, updateOccasion,
     budgetOverview, toggleShortlist, boughtToCSV,
-    validateCustomGift, addCustomGift };
+    validateCustomGift, addCustomGift,
+    parseSplitNames, splitPurchase, alreadyGivenToOthers, giftHistory };
 }

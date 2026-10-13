@@ -98,5 +98,27 @@ flow "bought CSV round-trips a gift with commas and quotes" "
   if(!/^\"Chess, \"\"deluxe\"\" edition\",Maya,2026,40$/.test(lines[1])) throw new Error('row: '+lines[1]);
 "
 
+flow "duplicate-gift guard warns before buying the same gift twice" "
+  const L=require('./js/logic.js');
+  const people=[{id:'p1',name:'Maya'},{id:'p2',name:'Ruth'}];
+  const bought=[{personId:'p2',name:'Chess set',price:40,year:2025,occasionId:'o9'}];
+  const dupes=L.alreadyGivenToOthers(bought,people,'p1','Chess set');
+  if(dupes.length!==1||dupes[0].personName!=='Ruth'||dupes[0].year!==2025) throw new Error('no warning: '+JSON.stringify(dupes));
+  if(L.alreadyGivenToOthers(bought,people,'p1','Tea set').length!==0) throw new Error('false warning');
+"
+
+flow "split gift: only your share hits the budget, timeline shows it" "
+  const L=require('./js/logic.js');
+  const people=[{id:'p1',name:'Maya'}];
+  const occs=[{id:'o1',personId:'p1',name:'Birthday',date:'2026-12-25',budget:100}];
+  const split=L.splitPurchase(90,L.parseSplitNames('Sam, Lee'));
+  const bought=[{personId:'p1',occasionId:'o1',name:'Espresso machine',price:split.share,totalPrice:split.total,splitWith:split.names,year:2026}];
+  const ov=L.budgetOverview(occs,people,bought,'2026-10-07');
+  if(ov.spent!==30) throw new Error('spent should be the 30 share, got '+ov.spent);
+  if(ov.remaining!==70) throw new Error('remaining='+ov.remaining);
+  const h=L.giftHistory(bought,'p1');
+  if(h.length!==1||h[0].gifts[0].name!=='Espresso machine') throw new Error('timeline: '+JSON.stringify(h));
+"
+
 echo "--- e2e: $pass passed, $fail failed ---"
 exit $((fail>0))
